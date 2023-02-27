@@ -6,16 +6,17 @@ SHELL ["/bin/bash", "-ceuxo", "pipefail"]
 
 ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1
 
-RUN --mount=type=cache,target=/root/.cache/pip pip install torch==1.13.0 torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu117
+RUN --mount=type=cache,target=/root/.cache/pip pip install torch==1.13.0 torchvision torchaudio -i https://mirrors.aliyun.com/pypi/simple --extra-index-url https://download.pytorch.org/whl/cu117
 
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
 RUN apt-get update && apt install gcc libsndfile1 ffmpeg build-essential zip unzip git -y && apt-get clean
 
 RUN --mount=type=cache,target=/root/.cache/pip <<EOF
 git config --global http.postBuffer 1048576000
-git clone https://github.com/Sygil-Dev/sygil-webui.git stable-diffusion
+git clone https://ghproxy.com/github.com/Sygil-Dev/sygil-webui.git stable-diffusion
 cd stable-diffusion
 git reset --hard 5291437085bddd16d752f811b6552419a2044d12
-pip install -r requirements.txt
+pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple
 EOF
 
 
@@ -25,10 +26,11 @@ cd stable-diffusion
 git fetch
 git checkout ${BRANCH}
 git reset --hard ${SHA}
-pip install -r requirements.txt
+sed -i -- 's/https:\/\/github.com/https:\/\/ghproxy.com\/github.com/g' /stable-diffusion/requirements.txt
+pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple
 EOF
 
-RUN --mount=type=cache,target=/root/.cache/pip pip install -U 'transformers>=4.24'
+RUN --mount=type=cache,target=/root/.cache/pip pip install -U 'transformers>=4.24' -i https://mirrors.aliyun.com/pypi/simple
 
 # add info
 COPY . /docker/
